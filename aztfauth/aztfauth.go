@@ -126,9 +126,6 @@ func (opt Option) getClientCert() ([]*x509.Certificate, crypto.PrivateKey, error
 	if err != nil {
 		return nil, nil, fmt.Errorf(`failed to parse client certificate": %v`, err)
 	}
-	if cert == nil || privateKey == nil {
-		return nil, nil, fmt.Errorf(`failed to parse client certificate": %v`, err)
-	}
 
 	parsedCerts := []*x509.Certificate{cert}
 	parsedCerts = append(parsedCerts, caCerts...)

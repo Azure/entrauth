@@ -120,7 +120,7 @@ func (opt Option) getClientCert() ([]*x509.Certificate, crypto.PrivateKey, error
 	}
 
 	if opt.Logger != nil {
-		opt.Logger.Printf("INFO: azidentity failed to parse client certificate (%v), falling back to the pkcs12 parser", err)
+		opt.Logger.Printf("warning: azidentity failed to parse client certificate (%v), falling back to the pkcs12 parser", err)
 	}
 	privateKey, cert, caCerts, fallbackErr := pkcs12.DecodeChain(certData, string(opt.ClientCertPassword))
 	if fallbackErr != nil {

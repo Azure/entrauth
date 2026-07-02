@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1
+	software.sslmate.com/src/go-pkcs12 v0.7.3
 )
 
 require (

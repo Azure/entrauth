@@ -45,11 +45,11 @@ Based on above, the `aztfauth` provides the following chained token credential:
            "assertion-request"
                    |
                    v
- Github / AzureDevOps / ManagedIdentity (per OIDCRequestType)
+ Github / AzureDevOps / ManagedIdentity
 
-    AzureDevOps: ADOServiceConnectionId != ""
-    ManagedIdentity: ManagedIdentityClientId != "" 
-    Github: ADOServiceConnectionId == "" && ManagedIdentityClientId == "" 
+AzureDevOps     when ADOServiceConnectionId != ""
+ManagedIdentity when ManagedIdentityClientId != "" 
+Github          when ADOServiceConnectionId == "" && ManagedIdentityClientId == "" 
                    |
                    v
             "client-secret"

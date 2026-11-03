@@ -73,8 +73,9 @@ func (AssertionFileCredentialOption) isCredentialOption() {}
 type AssertionRequestType string
 
 const (
-	AssertionRequestTypeGithub      AssertionRequestType = "Github"
-	AssertionRequestTypeAzureDevOps AssertionRequestType = "AzureDevOps"
+	AssertionRequestTypeGithub          AssertionRequestType = "Github"
+	AssertionRequestTypeAzureDevOps     AssertionRequestType = "AzureDevOps"
+	AssertionRequestTypeManagedIdentity AssertionRequestType = "ManagedIdentity"
 )
 
 type AssertionRequestCredentialOption struct {
@@ -117,6 +118,21 @@ type AssertionRequestAzureDevOpsCredentialOption struct {
 }
 
 func (AssertionRequestAzureDevOpsCredentialOption) isAssertionRequestCredentialPlatformOption() {}
+
+type AssertionRequestManagedIdentityCredentialOption struct {
+	TenantId                string
+	ClientId                string
+	ManagedIdentityClientId string
+
+	// Optional
+	azcore.ClientOptions
+	AdditionallyAllowedTenants []string
+	DisableInstanceDiscovery   bool
+	Cache                      azidentity.Cache
+	ManagedIdentityOIDCScope   string
+}
+
+func (AssertionRequestManagedIdentityCredentialOption) isAssertionRequestCredentialPlatformOption() {}
 
 type ManagedIdentityCredentialOption struct {
 	// Optional

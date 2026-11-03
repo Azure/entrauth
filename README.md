@@ -23,7 +23,7 @@ Auth
   |                    |       (build assertion)
   |                    |
   |                    +------ request --------------> "assertion-request"
-  |                                                    (Github, AzureDevOps)
+  |                                                    (Github, AzureDevOps, ManagedIdentity)
   +--> Token Provider
          |
          +------ Azure Managed Identity -------------> "managed-identity"
@@ -45,14 +45,12 @@ Based on above, the `aztfauth` provides the following chained token credential:
            "assertion-request"
                    |
                    v
-    ADOServiceConnectionId == "" ?
-                  / \
-               y /   \ n
-                /     \
-           Github    AzureDevOps
-                \     /
-                 \   /
-                  \ /
+ Github / AzureDevOps / ManagedIdentity
+
+AzureDevOps     when ADOServiceConnectionId != ""
+ManagedIdentity when ManagedIdentityClientId != "" 
+Github          when ADOServiceConnectionId == "" && ManagedIdentityClientId == "" 
+                   |
                    v
             "client-secret"
                    |
@@ -68,5 +66,3 @@ Based on above, the `aztfauth` provides the following chained token credential:
                    v
             "Azure Dev CLI"
 ```
-
-Note that each token credential can be enabled/disabled.

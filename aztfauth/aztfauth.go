@@ -41,10 +41,12 @@ type Option struct {
 	UseOIDCTokenFile bool
 	OIDCTokenFile    string
 
-	UseOIDCTokenRequest    bool
-	OIDCRequestToken       string
-	OIDCRequestURL         string
-	ADOServiceConnectionId string
+	UseOIDCTokenRequest      bool
+	OIDCRequestToken         string
+	OIDCRequestURL           string
+	ADOServiceConnectionId   string
+	ManagedIdentityClientId  string
+	ManagedIdentityOIDCScope string
 
 	UseMSI         bool
 	UseAzureCLI    bool
@@ -184,9 +186,12 @@ func (opt Option) buildOIDCTokenReqCredOpt() (entrauth.CredentialOption, error) 
 		return nil, err
 	}
 
-	// Based on whether the ADO service connection ID is specified, we choose to use either
-	// the ADO flow or Github flow.
-	if opt.ADOServiceConnectionId != "" {
+	// Based on the precense of ADOServiceConnectionId and ManagedIdentityClientId,
+	// we choose to use among ADO OIDC, MI OIDC and Github OIDC.
+	switch {
+	case opt.ADOServiceConnectionId != "" && opt.ManagedIdentityClientId != "":
+		return nil, fmt.Errorf(`only one of "ADOServiceConnectionId" and "ManagedIdentityClientId" can be specified`)
+	case opt.ADOServiceConnectionId != "":
 		return entrauth.AssertionRequestCredentialOption{
 			Type: entrauth.AssertionRequestTypeAzureDevOps,
 			PlatformOption: entrauth.AssertionRequestAzureDevOpsCredentialOption{
@@ -201,7 +206,22 @@ func (opt Option) buildOIDCTokenReqCredOpt() (entrauth.CredentialOption, error) 
 				Cache:                      opt.Cache,
 			},
 		}, nil
-	} else {
+	case opt.ManagedIdentityClientId != "":
+		return entrauth.AssertionRequestCredentialOption{
+			Type: entrauth.AssertionRequestTypeManagedIdentity,
+			PlatformOption: entrauth.AssertionRequestManagedIdentityCredentialOption{
+				ClientId:                 *clientId,
+				TenantId:                 *tenantId,
+				ManagedIdentityClientId:  opt.ManagedIdentityClientId,
+				ManagedIdentityOIDCScope: opt.ManagedIdentityOIDCScope,
+
+				ClientOptions:              opt.ClientOptions,
+				AdditionallyAllowedTenants: opt.AdditionallyAllowedTenants,
+				DisableInstanceDiscovery:   opt.DisableInstanceDiscovery,
+				Cache:                      opt.Cache,
+			},
+		}, nil
+	default:
 		return entrauth.AssertionRequestCredentialOption{
 			Type: entrauth.AssertionRequestTypeGithub,
 			PlatformOption: entrauth.AssertionRequestGithubCredentialOption{

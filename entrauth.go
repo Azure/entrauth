@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -107,6 +108,14 @@ func NewCredential(credsOpts []CredentialOption, option *NewCredentialOption) (t
 					logger.Printf("new request (based) assertion for AzureDevOps credential succeeded")
 					creds = append(creds, cred)
 				}
+			case AssertionRequestTypeManagedIdentity:
+				cred, err = newAssertionRequestManagedIdentityCredential(opt)
+				if err != nil {
+					logger.Printf("failed to new request (based) assertion for ManagedIdentity credential: %v", err)
+				} else {
+					logger.Printf("new request (based) assertion for ManagedIdentity credential succeeded")
+					creds = append(creds, cred)
+				}
 			default:
 				logger.Printf("unknown request (based) assertion credential type: %v", opt.Type)
 			}
@@ -179,6 +188,43 @@ func newAssertionRequestGithubCredential(opt AssertionRequestCredentialOption) (
 		&GithubCredentialOption{
 			ClientOptions:              popt.ClientOptions,
 			AdditionallyAllowedTenants: popt.AdditionallyAllowedTenants,
+			Cache:                      popt.Cache,
+		},
+	)
+}
+
+func newAssertionRequestManagedIdentityCredential(opt AssertionRequestCredentialOption) (azcore.TokenCredential, error) {
+	if opt.Type != AssertionRequestTypeManagedIdentity {
+		return nil, fmt.Errorf("invalid type %s (expect %s)", opt.Type, AssertionRequestTypeManagedIdentity)
+	}
+	popt, ok := opt.PlatformOption.(AssertionRequestManagedIdentityCredentialOption)
+	if !ok {
+		return nil, fmt.Errorf("invalid platform option %T (expect %T)", opt.PlatformOption, AssertionRequestManagedIdentityCredentialOption{})
+	}
+	scope := popt.ManagedIdentityOIDCScope
+	if scope == "" {
+		scope = "api://AzureADTokenExchange/.default"
+	}
+	managedIdentity, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ClientOptions: popt.ClientOptions,
+		ID:            azidentity.ClientID(popt.ManagedIdentityClientId),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	getAssertion := func(ctx context.Context) (string, error) {
+		token, err := managedIdentity.GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{scope}})
+		if err != nil {
+			return "", fmt.Errorf("getAssertion: cannot request token: %v", err)
+		}
+		return token.Token, nil
+	}
+	return azidentity.NewClientAssertionCredential(popt.TenantId, popt.ClientId, getAssertion,
+		&azidentity.ClientAssertionCredentialOptions{
+			ClientOptions:              popt.ClientOptions,
+			AdditionallyAllowedTenants: popt.AdditionallyAllowedTenants,
+			DisableInstanceDiscovery:   popt.DisableInstanceDiscovery,
 			Cache:                      popt.Cache,
 		},
 	)

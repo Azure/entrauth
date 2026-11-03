@@ -201,6 +201,10 @@ func newAssertionRequestManagedIdentityCredential(opt AssertionRequestCredential
 	if !ok {
 		return nil, fmt.Errorf("invalid platform option %T (expect %T)", opt.PlatformOption, AssertionRequestManagedIdentityCredentialOption{})
 	}
+	scope := popt.ManagedIdentityOIDCScope
+	if scope == "" {
+		scope = "api://AzureADTokenExchange/.default"
+	}
 	managedIdentity, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
 		ClientOptions: popt.ClientOptions,
 		ID:            azidentity.ClientID(popt.ManagedIdentityClientId),
@@ -210,7 +214,7 @@ func newAssertionRequestManagedIdentityCredential(opt AssertionRequestCredential
 	}
 
 	getAssertion := func(ctx context.Context) (string, error) {
-		token, err := managedIdentity.GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{"api://AzureADTokenExchange/.default"}})
+		token, err := managedIdentity.GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{scope}})
 		if err != nil {
 			return "", fmt.Errorf("getAssertion: cannot request token: %v", err)
 		}

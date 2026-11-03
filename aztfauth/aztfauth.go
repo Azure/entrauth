@@ -41,12 +41,13 @@ type Option struct {
 	UseOIDCTokenFile bool
 	OIDCTokenFile    string
 
-	UseOIDCTokenRequest     bool
-	OIDCRequestType         entrauth.AssertionRequestType
-	OIDCRequestToken        string
-	OIDCRequestURL          string
-	ADOServiceConnectionId  string
-	ManagedIdentityClientId string
+	UseOIDCTokenRequest      bool
+	OIDCRequestType          entrauth.AssertionRequestType
+	OIDCRequestToken         string
+	OIDCRequestURL           string
+	ADOServiceConnectionId   string
+	ManagedIdentityClientId  string
+	ManagedIdentityOIDCScope string
 
 	UseMSI         bool
 	UseAzureCLI    bool
@@ -221,9 +222,10 @@ func (opt Option) buildOIDCTokenReqCredOpt() (entrauth.CredentialOption, error) 
 		return entrauth.AssertionRequestCredentialOption{
 			Type: entrauth.AssertionRequestTypeManagedIdentity,
 			PlatformOption: entrauth.AssertionRequestManagedIdentityCredentialOption{
-				ClientId:                *clientId,
-				TenantId:                *tenantId,
-				ManagedIdentityClientId: opt.ManagedIdentityClientId,
+				ClientId:                 *clientId,
+				TenantId:                 *tenantId,
+				ManagedIdentityClientId:  opt.ManagedIdentityClientId,
+				ManagedIdentityOIDCScope: opt.ManagedIdentityOIDCScope,
 
 				ClientOptions:              opt.ClientOptions,
 				AdditionallyAllowedTenants: opt.AdditionallyAllowedTenants,

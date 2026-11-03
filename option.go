@@ -129,6 +129,7 @@ type AssertionRequestManagedIdentityCredentialOption struct {
 	AdditionallyAllowedTenants []string
 	DisableInstanceDiscovery   bool
 	Cache                      azidentity.Cache
+	ManagedIdentityOIDCScope   string
 }
 
 func (AssertionRequestManagedIdentityCredentialOption) isAssertionRequestCredentialPlatformOption() {}

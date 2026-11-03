@@ -23,7 +23,7 @@ Auth
   |                    |       (build assertion)
   |                    |
   |                    +------ request --------------> "assertion-request"
-  |                                                    (Github, AzureDevOps)
+  |                                                    (Github, AzureDevOps, ManagedIdentity)
   +--> Token Provider
          |
          +------ Azure Managed Identity -------------> "managed-identity"
@@ -45,14 +45,8 @@ Based on above, the `aztfauth` provides the following chained token credential:
            "assertion-request"
                    |
                    v
-    ADOServiceConnectionId == "" ?
-                  / \
-               y /   \ n
-                /     \
-           Github    AzureDevOps
-                \     /
-                 \   /
-                  \ /
+ Github / AzureDevOps / ManagedIdentity
+                   |
                    v
             "client-secret"
                    |
@@ -70,3 +64,5 @@ Based on above, the `aztfauth` provides the following chained token credential:
 ```
 
 Note that each token credential can be enabled/disabled.
+
+When `UseOIDCTokenRequest` is enabled, set `OIDCRequestType` to `entrauth.AssertionRequestTypeGithub`, `entrauth.AssertionRequestTypeAzureDevOps`, or `entrauth.AssertionRequestTypeManagedIdentity`. 

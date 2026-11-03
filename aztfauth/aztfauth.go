@@ -42,7 +42,6 @@ type Option struct {
 	OIDCTokenFile    string
 
 	UseOIDCTokenRequest      bool
-	OIDCRequestType          entrauth.AssertionRequestType
 	OIDCRequestToken         string
 	OIDCRequestURL           string
 	ADOServiceConnectionId   string
@@ -187,23 +186,12 @@ func (opt Option) buildOIDCTokenReqCredOpt() (entrauth.CredentialOption, error) 
 		return nil, err
 	}
 
-	switch opt.OIDCRequestType {
-	case entrauth.AssertionRequestTypeGithub:
-		return entrauth.AssertionRequestCredentialOption{
-			Type: entrauth.AssertionRequestTypeGithub,
-			PlatformOption: entrauth.AssertionRequestGithubCredentialOption{
-				ClientId:     *clientId,
-				TenantId:     *tenantId,
-				RequestUrl:   opt.OIDCRequestURL,
-				RequestToken: opt.OIDCRequestToken,
-
-				ClientOptions:              opt.ClientOptions,
-				AdditionallyAllowedTenants: opt.AdditionallyAllowedTenants,
-				DisableInstanceDiscovery:   opt.DisableInstanceDiscovery,
-				Cache:                      opt.Cache,
-			},
-		}, nil
-	case entrauth.AssertionRequestTypeAzureDevOps:
+	// Based on the precense of ADOServiceConnectionId and ManagedIdentityClientId,
+	// we choose to use among ADO OIDC, MI OIDC and Github OIDC.
+	switch {
+	case opt.ADOServiceConnectionId != "" && opt.ManagedIdentityClientId != "":
+		return nil, fmt.Errorf(`only one of "ADOServiceConnectionId" and "ManagedIdentityClientId" can be specified`)
+	case opt.ADOServiceConnectionId != "":
 		return entrauth.AssertionRequestCredentialOption{
 			Type: entrauth.AssertionRequestTypeAzureDevOps,
 			PlatformOption: entrauth.AssertionRequestAzureDevOpsCredentialOption{
@@ -218,7 +206,7 @@ func (opt Option) buildOIDCTokenReqCredOpt() (entrauth.CredentialOption, error) 
 				Cache:                      opt.Cache,
 			},
 		}, nil
-	case entrauth.AssertionRequestTypeManagedIdentity:
+	case opt.ManagedIdentityClientId != "":
 		return entrauth.AssertionRequestCredentialOption{
 			Type: entrauth.AssertionRequestTypeManagedIdentity,
 			PlatformOption: entrauth.AssertionRequestManagedIdentityCredentialOption{
@@ -234,7 +222,20 @@ func (opt Option) buildOIDCTokenReqCredOpt() (entrauth.CredentialOption, error) 
 			},
 		}, nil
 	default:
-		return nil, fmt.Errorf("unknown OIDC request type: %q", opt.OIDCRequestType)
+		return entrauth.AssertionRequestCredentialOption{
+			Type: entrauth.AssertionRequestTypeGithub,
+			PlatformOption: entrauth.AssertionRequestGithubCredentialOption{
+				ClientId:     *clientId,
+				TenantId:     *tenantId,
+				RequestUrl:   opt.OIDCRequestURL,
+				RequestToken: opt.OIDCRequestToken,
+
+				ClientOptions:              opt.ClientOptions,
+				AdditionallyAllowedTenants: opt.AdditionallyAllowedTenants,
+				DisableInstanceDiscovery:   opt.DisableInstanceDiscovery,
+				Cache:                      opt.Cache,
+			},
+		}, nil
 	}
 }
 
